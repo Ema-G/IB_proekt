@@ -1,0 +1,220 @@
+create schema "E-shop";
+
+set search_path = "E-shop";
+
+
+
+
+--  E-shop (name)
+ create table eshop(
+     id_key integer,
+     name varchar(25) not null,
+     constraint pk_eshop primary key (id_key)
+ );
+insert into eshop (id_key, name) VALUES ('1','MySkinCare');
+
+
+
+
+-- Account (username, name, surname, address, email, password, name*(e-shop))
+create table account(
+    id_account serial,
+    username varchar(25) not null unique ,
+    name varchar(25) not null ,
+    surname varchar(30) not null ,
+    address varchar(30) not null ,
+    email varchar(30) not null unique ,
+    constraint check_email check ( email ~* '^[A-Za-z0-9._%-]+@[A-Za-z0-9.-]+[.][A-Za-z]+$' ) ,
+    password varchar(16) not null ,
+    constraint pk_account primary key (id_account),
+    id_key integer,
+    constraint fk_eshop foreign key (id_key) references eshop(id_key)
+);
+insert into account (id_account, username, name, surname, address, email, password, id_key) VALUES
+(DEFAULT,'korisnik1','Ema','Georgieva','adresa1','ema.g@db.mk','pasvord1','1'),
+(DEFAULT,'korisnik2','Marina','Marinova','adresa2','marina.m@bd.mk','pasvord2','1');
+
+
+
+
+-- Shopping Cart (cart_id, account, username*(account))
+create table shopping_cart(
+    cart_id serial,
+    constraint pk_sc primary key (cart_id),
+    id_account integer,
+    constraint fk_acc foreign key (id_account) references account(id_account)
+);
+insert into shopping_cart(id_account) VALUES ('1'),
+                                                    ('1'),
+                                                    ('2');
+
+
+
+
+-- Product (id_code, name, price, quantity, name*(e-shop))
+create table product(
+    id_code integer,
+    name varchar(15) not null ,
+    price float not null ,
+    quantity integer not null ,
+    constraint pk_product primary key (id_code),
+    id_key integer,
+    constraint fk_eshop foreign key (id_key) references eshop(id_key)
+);
+insert into product(id_code, name, price, quantity, id_key) VALUES
+('10001','Niacinamide','4.86','20','1'),
+('10002','Retinol','5.59','13','1'),
+('10003','Buffet','13.46','16','1');
+
+
+
+
+-- Article (article_id, name, text, name*(e-shop), id_code*(product))
+create table article(
+    article_id integer,
+    name varchar(15),
+    text varchar(1000),
+    constraint pk_article primary key (article_id),
+    id_key integer,
+    constraint fk_eshop foreign key (id_key) references eshop(id_key),
+    id_code integer not null ,
+    constraint fk_product foreign key (id_code) references product(id_code)
+);
+insert into article (article_id, name, text, id_key, id_code) VALUES
+('1001','Niacinamide','Niacinamide (Vitamin B3) is indicated to reduce the appearance of skin blemishes and congestion. A high 10% concentration of this vitamin is supported in the formula by zinc salt of pyrrolidone carboxylic acid to balance visible aspects of sebum activity.','1','10001'),
+('1002','Retinol','This water-free solution contains 0.5% pure Retinol, an ingredient that can reduce the appearances of fine lines, of photo damage and of general skin aging.','1','10002'),
+('1003','Buffet','This formula combines a comprehensive array of studied technologies to target multiple signs of aging at once.','1','10003');
+
+
+
+-- shoppingCart_holds_product (cart_id*(shoppingCart), id_code*(product), quantity)
+create table shoppingCart_holds_product(
+    quantity integer,
+    cart_id integer,
+    id_code integer,
+    constraint pk_shoppingCart_holds_product primary key (cart_id, id_code),
+    constraint fk_shoppingCart_holds_product_cart foreign key (cart_id) references shopping_cart(cart_id),
+    constraint fk_shoppingCart_holds_product_product foreign key (id_code) references product(id_code)
+);
+insert into shoppingCart_holds_product(quantity, cart_id, id_code) VALUES ('1','1','10001'),
+                                                           ('1','2','10001'),
+                                                           ('1','3','10003');
+
+
+-- Pogled kon prodavnica i moze da se koristi i za pogled kon konkreten produkt
+create view pogled_kon_prodavnica as
+select name as ime_na_produkt, price as cena_na_produkt, quantity as preostanata_kolicina, picture as slika_na_produkt, id_code from product
+where quantity>'0';
+
+
+
+
+
+-- Pogled kon magazinot
+create view pogled_kon_magazin as
+select  ar.name as ime_na_statija, text as tekst_na_statija from article as ar
+join product as pr on ar.id_code = pr.id_code
+where pr.quantity>'0';
+
+
+
+
+
+--Pogled kon kosnicka
+create view pogled_kon_kosnicka as
+select pr.name as ime_na_produkt, sHp.quantity as izbrana_kolicina,pr.price as cena_na_eden, (pr.price * sHp.quantity) as vkupna_cena, status, acc.id_account
+from shoppingCart_holds_product as sHp
+join shopping_cart as sc on sHp.cart_id = sc.cart_id
+join account as acc on sc.id_account = acc.id_account
+join product as pr on sHp.id_code = pr.id_code;
+
+
+-- Forma za nov korisnik
+BEGIN;
+
+INSERT INTO account (username, name, surname, address, email, password) VALUES
+('korisnik7','Jovana','Jovanova','adresa7','jovana.j@bd.mk','pasvord7'),
+('korisnik8','Ana','Anova','adresa8','ana.a@bd.mk','pasvord8'),
+('korisnik9','Jana','Janova','adresa9','jana.j@bd.mk','pasvord9');
+
+COMMIT;
+ROLLBACK;
+
+select * from account;
+
+
+
+--Forma za najavuvanje
+BEGIN;
+
+select * from account
+where username = 'korisnik1' and password = 'pasvord1';
+
+COMMIT;
+
+
+
+--Forma za pravenje na naracka
+BEGIN;
+
+INSERT INTO shopping_cart (cart_id, id_account) VALUES ('12','7');
+
+INSERT INTO shoppingcart_holds_product(quantity, status, cart_id, id_code) VALUES
+('3','Nepotvrdena naracka','12','10002');
+
+UPDATE product
+SET quantity = quantity - 3
+where id_code = '10002';
+
+ROLLBACK;
+COMMIT;
+
+select * from pogled_kon_kosnicka;
+
+
+
+--Forma za potvrduvanje na naracka
+BEGIN;
+
+UPDATE shoppingCart_holds_product
+SET status = 'Potvrdena naracka'
+where cart_id = 15;
+
+ROLLBACK;
+COMMIT;
+
+
+
+
+
+--Vkupen broj na potvrdeni naracki
+select count(*) from shoppingcart_holds_product
+where status='Potvrdena naracka';
+
+-- Koi korisnici kolku naracki potvrdile
+select distinct acc.name, count(sc.id_account), (pr.price * sHp.quantity) as vkupna_cena
+from shoppingCart_holds_product as sHp
+join shopping_cart as sc on sHp.cart_id = sc.cart_id
+join account as acc on sc.id_account = acc.id_account
+join product as pr on sHp.id_code = pr.id_code
+where status='Potvrdena naracka'
+group by acc.name, vkupna_cena;
+
+--Najcesti naracani produkti
+select ime_na_produkt, sum(izbrana_kolicina) as broj_na_kupeni
+from pogled_kon_kosnicka
+where status ='Potvrdena naracka'
+group by ime_na_produkt
+order by broj_na_kupeni desc;
+
+
+-- Koj produkt i od koj e kupen vo tekovniot mesec
+select distinct pr.name as produkt, pr.id_code as id, extract(month from date) as mesec_na_kupeno, extract(year from date) as godina_na_kupeno
+from shoppingCart_holds_product as sHp
+join shopping_cart as sc on sHp.cart_id = sc.cart_id
+join account as acc on sc.id_account = acc.id_account
+join product as pr on sHp.id_code = pr.id_code
+where status='Potvrdena naracka' and  extract(year from date) = extract(year from now())
+group by produkt, id, mesec_na_kupeno, godina_na_kupeno
+order by mesec_na_kupeno;
+
