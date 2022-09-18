@@ -5,7 +5,7 @@ import java.sql.Timestamp;
 import java.util.Objects;
 
 @Entity
-@Table(name = "shoppingcart_holds_product", schema = "Eshopp", catalog = "DB_proekt")
+@Table(name = "shoppingcart_holds_product", schema = "E-shop", catalog = "postgres")
 @IdClass(ShoppingcartHoldsProductPK.class)
 public class ShoppingcartHoldsProduct {
     private Integer quantity;
@@ -26,11 +26,11 @@ public class ShoppingcartHoldsProduct {
         this.quantity = quantity;
     }
 
-    @Basic
-    @Column(name = "status")
-    public String getStatus() {
-        return status;
-    }
+//    @Basic
+//    @Column(name = "status")
+//    public String getStatus() {
+//        return status;
+//    }
 
     public void setStatus(String status) {
         this.status = status;
@@ -56,11 +56,11 @@ public class ShoppingcartHoldsProduct {
         this.idCode = idCode;
     }
 
-    @Basic
-    @Column(name = "date")
-    public Timestamp getDate() {
-        return date;
-    }
+//    @Basic
+//    @Column(name = "date")
+//    public Timestamp getDate() {
+//        return date;
+//    }
 
     public void setDate(Timestamp date) {
         this.date = date;

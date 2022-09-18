@@ -5,7 +5,7 @@ import java.util.Collection;
 import java.util.Objects;
 
 @Entity
-@Table(name = "product", schema = "Eshopp", catalog = "DB_proekt")
+@Table(name = "product", schema = "E-shop", catalog = "postgres")
 public class Product {
     private int idCode;
     private String name;
@@ -57,11 +57,11 @@ public class Product {
         this.quantity = quantity;
     }
 
-    @Basic
-    @Column(name = "picture")
-    public String getPicture() {
-        return picture;
-    }
+//    @Basic
+//    @Column(name = "picture")
+//    public String getPicture() {
+//        return picture;
+//    }
 
     public void setPicture(String picture) {
         this.picture = picture;

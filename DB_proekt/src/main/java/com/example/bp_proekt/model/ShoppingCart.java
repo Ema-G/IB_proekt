@@ -5,7 +5,7 @@ import java.util.Collection;
 
 
 @Entity
-@Table(name = "shopping_cart", schema = "Eshopp", catalog = "DB_proekt")
+@Table(name = "shopping_cart", schema = "E-shop", catalog = "postgres")
 public class ShoppingCart {
     private int cartId;
     private Integer idAccount;
